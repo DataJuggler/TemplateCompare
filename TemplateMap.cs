@@ -58,7 +58,9 @@ namespace TemplateCompare
             IgnoreList.Add("Parent");
             IgnoreList.Add("Caption");
             IgnoreList.Add("LabelColor");
+            IgnoreList.Add("LabelText");
             IgnoreList.Add("ButtonBorderColor");
+            IgnoreList.Add("CheckListMode");
         }
         #endregion
         
@@ -143,6 +145,24 @@ namespace TemplateCompare
                                         // recreate
                                         result = new ComparisonResult(property.Name, property.Value, globalDefaultValue.Value);
                                         result.Found = found;
+                                    }
+                                }
+
+                                // if stilll not equal
+                                if (!result.IsEqual)
+                                {
+                                    // if a default value
+                                    if (property.Value.ToLower() == "false")
+                                    {
+                                        result = new ComparisonResult(property.Name, property.Value, "false");
+                                        result.Found = true;
+                                    }
+
+                                    // if a default value
+                                    if (property.Value == "0")
+                                    {
+                                        result = new ComparisonResult(property.Name, property.Value, "0");
+                                        result.Found = true;
                                     }
                                 }
                             }
