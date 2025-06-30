@@ -2,8 +2,10 @@
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
+using PdfSharp.UniversalAccessibility.Drawing;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace TemplateCompare
 {
@@ -12,15 +14,14 @@ namespace TemplateCompare
         private const int Margin = 40;
         private const int LineHeight = 20;
         private const int SectionSpacing = 30;
-        private const int PageHeight = 960; // US Letter height in points
+        private const int PageHeight = 960;
         private const int BottomBuffer = 80;
 
         public static bool WritePdfReport(TemplateManager manager, string outputPath, bool showOnlyDifferences)
         {
-            // initial value
             bool written = false;
 
-            // ensure the font resolver is set once
+            // if no FontResolver
             if (GlobalFontSettings.FontResolver == null)
             {
                 GlobalFontSettings.FontResolver = new FontResolver("calibri");
@@ -34,13 +35,38 @@ namespace TemplateCompare
 
                 XGraphics gfx = XGraphics.FromPdfPage(page);
 
-                // Font setup
                 XFont boldFont = new XFont("calibri", 14, XFontStyleEx.Bold);
                 XFont contentFont = new XFont("calibri", 14, XFontStyleEx.Regular);
 
                 int y = Margin;
 
-                // Column positions (Code first, Razor second)
+                // Summary Header
+                DrawLine(gfx, "DataJuggler.Blazor.Components Template Information", boldFont, ref y);
+                DrawLine(gfx, $"Date: {DateTime.Now:MMMM dd, yyyy}", contentFont, ref y);
+                DrawLine(gfx, $"Total Templates: {manager.Templates.Count}", contentFont, ref y);
+
+                int validCount = manager.Templates.Count(t => t.IsValid);
+                int invalidCount = manager.Templates.Count(t => !t.IsValid);
+
+                DrawLine(gfx, $"    Valid: {validCount}", contentFont, ref y);
+                DrawLine(gfx, $"    Not Valid: {invalidCount}", contentFont, ref y);
+                DrawLine(gfx, " ", contentFont, ref y);
+                DrawLine(gfx, " ", contentFont, ref y);
+
+                // Draw smiley if all templates are valid
+                if (validCount == manager.Templates.Count)
+                {
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        Properties.Resources.Smiley.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        ms.Position = 0;
+
+                        XImage smiley = XImage.FromStream(ms);
+                        gfx.DrawImage(smiley, 184, 68, 64, 64);
+                    }
+                }
+
+                // Column positions
                 int xName = Margin;
                 int xFound = xName + 140;
                 int xEqual = xFound + 50;
@@ -59,11 +85,10 @@ namespace TemplateCompare
                         y = Margin;
                     }
 
-                    // Section header
                     DrawLine(gfx, "Template Comparison Report", boldFont, ref y);
                     DrawLine(gfx, $"Component: {Path.GetFileName(map.ComponentPath)}", boldFont, ref y);
                     DrawLine(gfx, $"Template:  {Path.GetFileName(map.TemplatePath)}", boldFont, ref y);
-                    DrawLine(gfx, " ", contentFont, ref y); // blank line for spacing
+                    DrawLine(gfx, " ", contentFont, ref y);
 
                     if (map.IsValid)
                     {
@@ -75,31 +100,28 @@ namespace TemplateCompare
                             ms.Position = 0;
 
                             XImage smiley = XImage.FromStream(ms);
-                            gfx.DrawImage(smiley, Margin, y, 32, 32); // Draw at left margin
+                            gfx.DrawImage(smiley, Margin, y, 32, 32);
                             y += 40;
                         }
                     }
                     else
                     {
-                        // Column headers
                         gfx.DrawString("Property", boldFont, XBrushes.Black, new XPoint(xName, y));
                         gfx.DrawString("Found", boldFont, XBrushes.Black, new XPoint(xFound, y));
                         gfx.DrawString("Equal", boldFont, XBrushes.Black, new XPoint(xEqual, y));
-                        gfx.DrawString("Code Value", boldFont, XBrushes.Black, new XPoint(xCode, y));
                         gfx.DrawString("Razor Value", boldFont, XBrushes.Black, new XPoint(xRazor, y));
+                        gfx.DrawString("Code Value", boldFont, XBrushes.Black, new XPoint(xCode, y));
                         y += LineHeight;
 
-                        // Comparison rows
                         foreach (var result in map.Results)
                         {
                             if (!showOnlyDifferences || !result.IsEqual || !result.Found)
                             {
                                 gfx.DrawString(Trunc(result.Name, 40), contentFont, XBrushes.Black, new XPoint(xName, y));
                                 gfx.DrawString(result.Found.ToString(), contentFont, XBrushes.Black, new XPoint(xFound, y));
-                                gfx.DrawString(result.IsEqual.ToString(), contentFont, XBrushes.Black, new XPoint(xEqual, y));                                
+                                gfx.DrawString(result.IsEqual.ToString(), contentFont, XBrushes.Black, new XPoint(xEqual, y));
+                                gfx.DrawString(Trunc(result.RazorValue, 35), contentFont, XBrushes.Black, new XPoint(xRazor, y));
                                 gfx.DrawString(Trunc(result.CodeValue, 35), contentFont, XBrushes.Black, new XPoint(xCode, y));
-                                gfx.DrawString(Trunc(result.RazorValue, 35), contentFont, XBrushes.Black, new XPoint(xRazor, y));                                
-
                                 y += LineHeight;
 
                                 if (y > PageHeight - BottomBuffer)
@@ -139,9 +161,7 @@ namespace TemplateCompare
             string truncatedValue = value;
 
             if (TextHelper.Exists(value) && value.Length > maxLength)
-            {
                 truncatedValue = value.Substring(0, maxLength - 3) + "...";
-            }
 
             return truncatedValue;
         }
