@@ -85,7 +85,6 @@ namespace TemplateCompare
                         y = Margin;
                     }
 
-                    DrawLine(gfx, "Template Comparison Report", boldFont, ref y);
                     DrawLine(gfx, $"Component: {Path.GetFileName(map.ComponentPath)}", boldFont, ref y);
                     DrawLine(gfx, $"Template:  {Path.GetFileName(map.TemplatePath)}", boldFont, ref y);
                     DrawLine(gfx, " ", contentFont, ref y);

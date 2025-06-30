@@ -61,6 +61,9 @@ namespace TemplateCompare
             IgnoreList.Add("LabelText");
             IgnoreList.Add("ButtonBorderColor");
             IgnoreList.Add("CheckListMode");
+            IgnoreList.Add("Text");
+            IgnoreList.Add("ClickHandler");
+            IgnoreList.Add("ImageUrl");
         }
         #endregion
         

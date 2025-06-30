@@ -135,6 +135,7 @@ namespace TemplateCompare
                                         Templates.Add(templateMap);
                                     }
 
+                                    // required
                                     break;
 
                                 case "CheckedListBoxComponent.txt":
@@ -149,6 +150,7 @@ namespace TemplateCompare
                                         Templates.Add(templateMap);
                                     }
 
+                                    // required
                                     break;
 
                                 case "ComboBoxCheckListComponent.txt":
@@ -165,6 +167,7 @@ namespace TemplateCompare
                                         Templates.Add(templateMap);
                                     }
 
+                                    // required
                                     break;
 
                                 case "TextBoxComponent.txt":
@@ -179,6 +182,23 @@ namespace TemplateCompare
                                         Templates.Add(templateMap);
                                     }
 
+                                    // required
+                                    break;
+
+                                case "ImageButtonComponent.txt":
+                                case "ImageButtonSlim.txt":
+
+                                    // Maps to the ImageButton
+                                    componentPath = Path.Combine(ComponentsFolder, "ImageButton.razor.cs");
+
+                                    // if the ComponentPath exists
+                                    if (FileHelper.Exists(componentPath))
+                                    {
+                                        templateMap = new TemplateMap(filePath, componentPath, globalDefaults);
+                                        Templates.Add(templateMap);
+                                    }
+
+                                    // required
                                     break;
                             }
                         }
